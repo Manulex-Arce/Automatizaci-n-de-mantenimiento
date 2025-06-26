@@ -38,13 +38,6 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       white-space: pre-wrap; /* Para que respete saltos de línea */
     }
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.2; }
-    }
-    #emoji {
-      animation: blink 1s infinite;
-    }
   </style>
 </head>
 <body>
@@ -55,36 +48,20 @@
     <button type="submit">Enviar dominio</button>
   </form>
 
-  <div id="responseDiv"><span id="emoji">⏳</span> Procesando dominio...</div>
+  <div id="response"></div>
 
   <script>
-    const responseDiv = document.getElementById('response');
-    const emojis = ['⏳', '⌛'];
-    let emojiIndex = 0;
-    let animationInterval;
-
-    function startEmojiAnimation() {
-      animationInterval = setInterval(() => {
-        responseDiv.textContent = `${emojis[emojiIndex]} Procesando dominio...`;
-        emojiIndex = (emojiIndex + 1) % emojis.length;
-      }, 500); // Cambia cada 500ms
-    }
-
-    function stopEmojiAnimation() {
-      clearInterval(animationInterval);
-      responseDiv.textContent = "✅ Dominio procesado."; // O el mensaje final que quieras
-    }
-
     document.getElementById("domain-form").addEventListener("submit", async function(e) {
       e.preventDefault();
       const domain = document.getElementById("domain").value.trim();
+      const responseDiv = document.getElementById("response");
 
       if (!domain) {
         responseDiv.innerHTML = "<strong>Por favor ingresa un dominio válido.</strong>";
         return;
       }
 
-      startEmojiAnimation();
+      responseDiv.innerHTML = '<img src="img/loaging.gif" alt="Cargando..." style="width:40px; vertical-align:middle;"> Procesando dominio...';
 
       try {
         const response = await fetch("https://n8n.publissoft.com/webhook-test/3c6d398e-da6c-4bf1-99f0-ecc8396b1e4c", {
@@ -98,11 +75,9 @@
         }
 
         const result = await response.text();
-        responseDiv.innerHTML = result;
+        responseDiv.textContent = "✅ Dominio procesado.";
       } catch (error) {
         responseDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
-      } finally {
-        stopEmojiAnimation();
       }
     });
   </script>
