@@ -75,7 +75,7 @@
         }
 
         const result = await response.text();
-        responseDiv.textContent = "✅ Dominio procesado.";
+        responseDiv.textContent = result;
       } catch (error) {
         responseDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
       }
