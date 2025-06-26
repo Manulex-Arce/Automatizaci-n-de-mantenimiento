@@ -64,7 +64,7 @@
       responseDiv.textContent = "⏳ Procesando dominio...";
 
       try {
-        const response = await fetch("https://n8n.publissoft.com/webhook-test/3c6d398e-da6c-4bf1-99f0-ecc8396b1e4c", {
+        const response = await fetch("https://n8n.publissoft.com/webhook/3c6d398e-da6c-4bf1-99f0-ecc8396b1e4c", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ domain })
