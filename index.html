@@ -75,7 +75,9 @@
         }
 
         const result = await response.text();
-        responseDiv.textContent = result;
+        // responseDiv.textContent = result;
+        responseDiv.innerHTML = result;
+
       } catch (error) {
         responseDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
       }
