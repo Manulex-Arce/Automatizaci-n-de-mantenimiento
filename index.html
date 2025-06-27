@@ -50,7 +50,7 @@
 
   <div id="response"></div>
 
-  <script>
+  <!-- <script>
     document.getElementById("domain-form").addEventListener("submit", async function(e) {
       e.preventDefault();
       const domain = document.getElementById("domain").value.trim();
@@ -63,22 +63,99 @@
 
       responseDiv.innerHTML = '<img src="img/loaging.gif" alt="Cargando..." style="width:40px; vertical-align:middle;"> Procesando dominio...';
 
+    //   try {
+    //     const response = await fetch("https://n8n.publissoft.com/webhook-test/3c6d398e-da6c-4bf1-99f0-ecc8396b1e4c", {
+    //       method: "POST",
+    //       signal: AbortSignal.timeout(120000), // 120 segundos (solo navegadores modernos)
+    //       headers: { "Content-Type": "application/json" },
+    //       body: JSON.stringify({ domain })
+    //     });
+
+    //     if (!response.ok) {
+    //       throw new Error(`Error HTTP ${response.status} - ${response.statusText}`);
+    //     }
+
+    //     const result = await response.text();
+    //     responseDiv.textContent = result;
+    //   } catch (error) {
+    //     responseDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+    //   }
+    try {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 segundos
+
+  const response = await fetch("https://n8n.publissoft.com/webhook-test/3c6d398e-da6c-4bf1-99f0-ecc8396b1e4c", {
+    method: "POST",
+    signal: controller.signal, // Usa el AbortController
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ domain })
+  });
+
+  clearTimeout(timeoutId); // Limpiar el timeout si la respuesta llega
+
+  if (!response.ok) {
+    throw new Error(`Error HTTP ${response.status} - ${response.statusText}`);
+  }
+
+  const result = await response.text();
+  responseDiv.textContent = result;
+} catch (error) {
+  responseDiv.innerHTML = `<strong>❌ Error:</strong> ${error.name === "AbortError" ? "Tiempo de espera agotado (120s)" : error.message}`;
+}
+    });
+  </script> -->
+
+  <script>
+    document.getElementById("domain-form").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const domain = document.getElementById("domain").value.trim();
+      const responseDiv = document.getElementById("response");
+      const submitButton = document.querySelector("#domain-form button[type='submit']"); // Referencia al botón
+  
+      if (!domain) {
+        responseDiv.innerHTML = "<strong>Por favor ingresa un dominio válido.</strong>";
+        return;
+      }
+  
+      // Mostrar estado de carga y deshabilitar el botón
+      responseDiv.innerHTML = '<img src="img/loading.gif" alt="Cargando..." style="width:40px; vertical-align:middle;"> Procesando dominio...';
+      submitButton.disabled = true;
+  
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 segundos
+  
         const response = await fetch("https://n8n.publissoft.com/webhook-test/3c6d398e-da6c-4bf1-99f0-ecc8396b1e4c", {
           method: "POST",
-          signal: AbortSignal.timeout(120000), // 120 segundos (solo navegadores modernos)
+          signal: controller.signal,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ domain })
         });
-
+  
+        clearTimeout(timeoutId);
+  
         if (!response.ok) {
-          throw new Error(`Error HTTP ${response.status} - ${response.statusText}`);
+          throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
         }
-
-        const result = await response.text();
-        responseDiv.textContent = result;
+  
+        const result = await response.json(); // Cambiado a json() si la respuesta es JSON
+        responseDiv.innerHTML = `<strong>✅ Resultado:</strong> ${JSON.stringify(result)}`;
+  
       } catch (error) {
-        responseDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+        // Manejo específico de errores
+        let errorMessage = error.message;
+        
+        if (error.name === "AbortError") {
+          errorMessage = "El servidor tardó demasiado en responder (más de 120 segundos)";
+        } else if (error instanceof TypeError) {
+          errorMessage = "Error de red o CORS. Verifica tu conexión";
+        }
+  
+        responseDiv.innerHTML = `<strong>❌ Error:</strong> ${errorMessage}`;
+        
+      } finally {
+        // Rehabilitar el botón siempre
+        submitButton.disabled = false;
       }
     });
   </script>
