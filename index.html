@@ -128,53 +128,63 @@
   </script> -->
 
   <script>
-    document.getElementById("domain-form").addEventListener("submit", async (e) => {
+   document.getElementById("domain-form").addEventListener("submit", async function(e) {
   e.preventDefault();
   const domain = document.getElementById("domain").value.trim();
   const responseDiv = document.getElementById("response");
-  const submitButton = document.querySelector("button[type='submit']");
+  const submitButton = document.querySelector("#domain-form button[type='submit']");
 
-  // Validación y UI
   if (!domain) {
     responseDiv.innerHTML = "<strong>Por favor ingresa un dominio válido.</strong>";
     return;
   }
+
+  // Estado de carga
   submitButton.disabled = true;
-  responseDiv.innerHTML = '<div class="loading">Procesando... <div class="spinner"></div></div>';
+  responseDiv.innerHTML = `
+    <div class="loading">
+      <img src="img/loading.gif" style="width:30px; vertical-align:middle;">
+      <span>Consultando datos para <strong>${domain}</strong>...</span>
+    </div>
+  `;
 
   try {
-    // 1. Enviar solicitud inicial
-    const initResponse = await fetch("https://n8n.publissoft.com/webhook-init", {
+    // 1. Enviar solicitud a TU webhook
+    const response = await fetch("https://n8n.publissoft.com/webhook-test/3c6d398e-da6c-4bf1-99f0-ecc8396b1e4c", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ domain })
+      headers: { 
+        "Content-Type": "application/json",
+        "X-Request-ID": Math.random().toString(36).substring(7) // ID único para tracking
+      },
+      body: JSON.stringify({ 
+        domain: domain,
+        notifyUrl: "https://tudominio.com/webhook-result" // Opcional para respuesta asíncrona
+      })
     });
 
-    if (!initResponse.ok) throw new Error(await initResponse.text());
-    
-    const { jobId } = await initResponse.json();
+    // 2. Manejar respuesta
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.error || `Error HTTP ${response.status}`);
+    }
 
-    // 2. Polling para verificar estado
-    const checkStatus = async () => {
-      const statusResponse = await fetch(`https://n8n.publissoft.com/webhook-status?jobId=${jobId}`);
-      
-      if (!statusResponse.ok) throw new Error("Error al verificar estado");
-      
-      const { status, result } = await statusResponse.json();
-
-      if (status === "completed") {
-        responseDiv.innerHTML = `<strong>Resultado:</strong> ${result}`;
-      } else if (status === "failed") {
-        throw new Error(result?.error || "Procesamiento fallido");
-      } else {
-        setTimeout(checkStatus, 3000); // Reintentar cada 3 segundos
-      }
-    };
-
-    await checkStatus();
+    const result = await response.json();
+    responseDiv.innerHTML = `
+      <div class="success">
+        <h3>Resultado para ${domain}:</h3>
+        <pre>${JSON.stringify(result, null, 2)}</pre>
+      </div>
+    `;
 
   } catch (error) {
-    responseDiv.innerHTML = `<strong class="error">❌ Error:</strong> ${error.message}`;
+    responseDiv.innerHTML = `
+      <div class="error">
+        <strong>❌ Error en la consulta:</strong><br>
+        ${error.message}<br><br>
+        <small>El AI Agent sigue procesando en segundo plano. Revisa más tarde.</small>
+      </div>
+    `;
+    console.error("Detalles del error:", error);
   } finally {
     submitButton.disabled = false;
   }
