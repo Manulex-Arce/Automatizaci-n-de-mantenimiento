@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Automatización de Mantenimiento</title>
+  <title>Automatización de Mantenimiento V2</title>
   <style>
     body {
       font-family: sans-serif;
@@ -63,7 +63,7 @@
   </style>
 </head>
 <body>
-  <h1>Clasificador de Dominios</h1>
+  <h1>Clasificador de Dominios V2</h1>
   <p>Ingresa un dominio para ejecutar la automatización de mantenimiento:</p>
   <form id="domain-form">
     <input type="text" id="domain" name="domain" placeholder="ej. tudominio sin 'www' ni '.com, .ca'" required />
@@ -94,7 +94,8 @@
 
   try {
     // 1. Enviar solicitud a TU webhook
-    const response = await fetch("https://n8n.publissoft.com/webhook-test/procesar-dominio", {
+    const response = await fetch("https://n8n.publissoft.com/webhook-test/1ea8e878-6ad0-451b-af53-0c596ada3ac5", {
+      
     method: "POST",
     headers: {
       "Content-Type": "application/json"
