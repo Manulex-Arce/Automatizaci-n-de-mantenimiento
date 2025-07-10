@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Automatización de Mantenimiento</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #007acc;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+    #response {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #fff;
+      border-left: 4px solid #007acc;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      white-space: pre-wrap; /* Para que respete saltos de línea */
+    }
+    .loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(0,0,0,0.1);
+  border-radius: 50%;
+  border-top-color: #3498db;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error {
+  color: #e74c3c;
+}
+  </style>
+</head>
+<body>
+  <h1>Clasificador de Dominios</h1>
+  <p>Ingresa un dominio para ejecutar la automatización de mantenimiento:</p>
+  <form id="domain-form">
+    <input type="text" id="domain" name="domain" placeholder="ej. tudominio sin 'www' ni '.com, .ca'" required />
+    <button type="submit">Enviar dominio</button>
+  </form>
+
+  <div id="response"></div>
+  <script>
+   document.getElementById("domain-form").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const domain = document.getElementById("domain").value.trim();
+  const responseDiv = document.getElementById("response");
+  const submitButton = document.querySelector("#domain-form button[type='submit']");
+
+  if (!domain) {
+    responseDiv.innerHTML = "<strong>Por favor ingresa un dominio válido.</strong>";
+    return;
+  }
+
+  // Estado de carga
+  submitButton.disabled = true;
+  responseDiv.innerHTML = `
+    <div class="loading">
+      <img src="img/loading.gif" style="width:30px; vertical-align:middle;">
+      <span>Consultando datos para <strong>${domain}</strong>...</span>
+    </div>
+  `;
+
+  try {
+    // 1. Enviar solicitud a TU webhook
+    const response = await fetch("https://n8n.publissoft.com/webhook-test/procesar-dominio", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ domain }) // ← correcto, no pongas 'dominio'
+  });
+
+  const result = await response.json();
+  responseDiv.innerHTML = `
+    ✅ Procesando... puedes revisar en unos minutos aquí:<br>
+    <a href="${result.resultUrl}" target="_blank">${result.resultUrl}</a>
+  `;
+
+
+
+  } catch (error) {
+    responseDiv.innerHTML = `
+      <div class="error">
+        <strong>❌ Error en la consulta:</strong><br>
+        ${error.message}<br><br>
+        <small>El AI Agent sigue procesando en segundo plano. Revisa más tarde.</small>
+      </div>
+    `;
+    console.error("Detalles del error:", error);
+  } finally {
+    submitButton.disabled = false;
+  }
+});
+  </script>
+</body>
+</html>
